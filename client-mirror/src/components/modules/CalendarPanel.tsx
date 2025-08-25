@@ -79,9 +79,9 @@ const CalendarPanel: React.FC = () => {
   // Show loading state briefly
   if (isLoading) {
     return (
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col">
         <h3 className="text-lg font-mirror-primary font-normal text-mirror-text uppercase border-b border-mirror-text-dimmed leading-4 pb-1 mb-2">Calendar</h3>
-        <div className="flex-1 flex flex-col items-center justify-center text-center">
+        <div className="flex flex-col items-center justify-center text-center py-4">
           <div className="text-mirror-xs text-mirror-text font-mirror-primary">
             <p>Loading events...</p>
           </div>
@@ -93,9 +93,9 @@ const CalendarPanel: React.FC = () => {
   // Show error state
   if (error || !calendarData) {
     return (
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col">
         <h3 className="text-lg font-mirror-primary font-normal text-mirror-text uppercase border-b border-mirror-text-dimmed leading-4 pb-1 mb-2">Calendar</h3>
-        <div className="flex-1 flex flex-col items-center justify-center text-center">
+        <div className="flex flex-col items-center justify-center text-center py-4">
           <div className="text-mirror-xs text-mirror-text font-mirror-primary">
             <p>Calendar unavailable</p>
             <p className="text-mirror-text-dimmed">Check Google Calendar setup</p>
@@ -106,7 +106,7 @@ const CalendarPanel: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full mb-4">
       <h3 className="text-lg font-mirror-primary font-normal text-mirror-text uppercase border-b border-mirror-text-dimmed leading-4 pb-1 mb-2">Calendar</h3>
       
       <div className="flex-1 overflow-hidden">

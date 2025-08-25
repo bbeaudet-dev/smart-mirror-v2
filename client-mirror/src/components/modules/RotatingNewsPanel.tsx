@@ -64,9 +64,9 @@ const RotatingNewsPanel: React.FC = () => {
   // Show loading state briefly
   if (isLoading) {
     return (
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col">
         <h3 className="text-lg font-mirror-primary font-normal text-mirror-text uppercase border-b border-mirror-text-dimmed leading-4 pb-1 mb-2">News</h3>
-        <div className="flex-1 flex flex-col items-center justify-center text-center">
+        <div className="flex flex-col items-center justify-center text-center py-4">
           <div className="text-mirror-xs text-mirror-text font-mirror-primary">
             <p>Loading headlines...</p>
           </div>
@@ -78,9 +78,9 @@ const RotatingNewsPanel: React.FC = () => {
   // Show error state
   if (error || !newsData) {
     return (
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col">
         <h3 className="text-lg font-mirror-primary font-normal text-mirror-text uppercase border-b border-mirror-text-dimmed leading-4 pb-1 mb-2">News</h3>
-        <div className="flex-1 flex flex-col items-center justify-center text-center">
+        <div className="flex flex-col items-center justify-center text-center py-4">
           <div className="text-mirror-xs text-mirror-text font-mirror-primary">
             <p>News unavailable</p>
             <p className="text-mirror-text-dimmed">Check NewsAPI configuration</p>
@@ -93,10 +93,10 @@ const RotatingNewsPanel: React.FC = () => {
   const currentHeadline = newsData.headlines[currentIndex];
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col mb-4">
       <h3 className="text-lg font-mirror-primary font-normal text-mirror-text uppercase border-b border-mirror-text-dimmed leading-4 pb-1 mb-2">News</h3>
       
-      <div className="flex-1 overflow-hidden">
+      <div className="overflow-hidden">
         {newsData.headlines.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <div className="text-mirror-lg text-mirror-text-dimmed mb-2">HEADLINES</div>

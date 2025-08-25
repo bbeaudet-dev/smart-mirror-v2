@@ -168,7 +168,7 @@ const WebcamPanel: React.FC<WebcamPanelProps> = ({ onAiMessage, onAiLoading }) =
   const handleRoboflowDetection = () => handleAiAnalysis('roboflow');
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col">
       {/* Video Feed Component */}
       <VideoFeed
         stream={stream}

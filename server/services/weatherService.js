@@ -7,10 +7,20 @@ class WeatherService {
     
     // Default location (can be made configurable)
     this.defaultLocation = process.env.WEATHER_LOCATION || 'New York, NY';
+    
+    // Weather cache
+    this.cache = {
+      data: null,
+      timestamp: null,
+      location: null
+    };
+    
+    // Cache duration: 10 minutes
+    this.cacheDuration = 10 * 60 * 1000; // 10 minutes in milliseconds
   }
 
   /**
-   * Get current weather and forecast
+   * Get current weather and forecast with caching
    * @param {string} location - City, state or coordinates
    * @returns {Promise<Object>} - Weather data
    */
@@ -21,6 +31,17 @@ class WeatherService {
         throw new Error('Weather API key not configured');
       }
 
+      // Check if we have valid cached data
+      const now = Date.now();
+      if (this.cache.data && 
+          this.cache.timestamp && 
+          this.cache.location === location &&
+          (now - this.cache.timestamp) < this.cacheDuration) {
+        console.log('Using cached weather data');
+        return this.cache.data;
+      }
+
+      console.log('Fetching fresh weather data from API');
       const response = await axios.get(`${this.baseUrl}/forecast.json`, {
         params: {
           key: this.apiKey,
@@ -30,7 +51,17 @@ class WeatherService {
         }
       });
 
-      return this.formatWeatherData(response.data);
+      const weatherData = this.formatWeatherData(response.data);
+      
+      // Cache the new data
+      this.cache = {
+        data: weatherData,
+        timestamp: now,
+        location: location
+      };
+      
+      console.log('Weather data cached for 10 minutes');
+      return weatherData;
     } catch (error) {
       console.error('Weather API Error:', error.message);
       throw new Error(`Unable to retrieve weather data: ${error.message}`);
@@ -118,6 +149,37 @@ class WeatherService {
     };
 
     return icons[code] || '?';
+  }
+
+  /**
+   * Clear the weather cache
+   */
+  clearCache() {
+    this.cache = {
+      data: null,
+      timestamp: null,
+      location: null
+    };
+    console.log('Weather cache cleared');
+  }
+
+  /**
+   * Get cache status
+   */
+  getCacheStatus() {
+    if (!this.cache.data || !this.cache.timestamp) {
+      return { cached: false, age: null };
+    }
+    
+    const age = Date.now() - this.cache.timestamp;
+    const isValid = age < this.cacheDuration;
+    
+    return {
+      cached: isValid,
+      age: age,
+      location: this.cache.location,
+      expiresIn: this.cacheDuration - age
+    };
   }
 }
 

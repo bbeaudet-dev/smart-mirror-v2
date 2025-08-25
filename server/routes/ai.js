@@ -20,6 +20,8 @@ const upload = multer({
   },
 });
 
+
+
 // POST /api/ai/analyze-outfit-with-weather - Outfit analysis with weather context
 router.post('/analyze-outfit-with-weather', upload.single('image'), async (req, res) => {
   try {
@@ -46,20 +48,42 @@ router.post('/analyze-outfit-with-weather', upload.single('image'), async (req, 
     const PromptService = require('../services/promptService');
     const outfitPrompt = PromptService.generateWeatherAwareOutfitPrompt(weatherData);
 
-    const analysis = await OpenAIService.analyzeImage(imageBuffer, imageType, outfitPrompt, 'outfit-analysis');
+    // Start both AI analysis and TTS generation in parallel
+    const voice = req.body.voice || 'nova';
     
-    // Generate TTS audio in parallel with selected voice
+    const [analysis, ttsResult] = await Promise.allSettled([
+      OpenAIService.analyzeImage(imageBuffer, imageType, outfitPrompt, 'outfit-analysis'),
+      (async () => {
+        try {
+          const TTSService = require('../services/ttsService');
+          const ttsService = new TTSService();
+          // We'll generate TTS after we get the analysis text
+          return { voice };
+        } catch (error) {
+          console.error('TTS service initialization failed:', error);
+          return null;
+        }
+      })()
+    ]);
+
+    // Handle AI analysis result
+    if (analysis.status === 'rejected') {
+      throw new Error(`AI analysis failed: ${analysis.reason.message}`);
+    }
+    
+    const analysisText = analysis.value;
+    
+    // Generate TTS for the analysis text
     let audioBuffer = null;
-    let voice = req.body.voice || 'nova';
-    
-    try {
-      const TTSService = require('../services/ttsService');
-      const ttsService = new TTSService();
-      const ttsResult = await ttsService.generateSpeech(analysis, voice, 'default');
-      audioBuffer = ttsResult.audioBuffer;
-      voice = ttsResult.voice;
-    } catch (ttsError) {
-      console.error('TTS generation failed, returning text only:', ttsError);
+    if (ttsResult.status === 'fulfilled' && ttsResult.value) {
+      try {
+        const TTSService = require('../services/ttsService');
+        const ttsService = new TTSService();
+        const ttsResponse = await ttsService.generateSpeech(analysisText, voice, 'default');
+        audioBuffer = ttsResponse.audioBuffer;
+      } catch (ttsError) {
+        console.error('TTS generation failed, returning text only:', ttsError);
+      }
     }
 
     // Return both text and audio

@@ -112,20 +112,20 @@ export class SpeechService {
 
     const utterance = new SpeechSynthesisUtterance(text);
     
-    // Adjust voice properties based on personality
+    // Adjust voice properties based on personality (faster speeds)
     switch (personality) {
       case "snoop":
-        utterance.rate = 0.8; // Slower, more relaxed
+        utterance.rate = 1.1; // Faster but still relaxed
         utterance.pitch = 0.9; // Slightly lower pitch
         utterance.volume = 0.9;
         break;
       case "elle":
-        utterance.rate = 1.2; // Faster, more energetic
+        utterance.rate = 1.4; // Much faster, more energetic
         utterance.pitch = 1.1; // Slightly higher pitch
         utterance.volume = 0.9;
         break;
       default:
-        utterance.rate = 1.0;
+        utterance.rate = 1.3; // Faster default speed
         utterance.pitch = 1.0;
         utterance.volume = 0.9;
     }

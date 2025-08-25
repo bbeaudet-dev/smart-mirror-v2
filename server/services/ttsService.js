@@ -69,7 +69,7 @@ class TTSService {
         voice: selectedVoice,
         input: text,
         response_format: 'opus', // Use opus format for smaller files (better than OGG)
-        speed: 1.0 // Normal speed for best quality
+        speed: 1.3 // Faster speed for quicker responses
       });
 
       const audioBuffer = Buffer.from(await response.arrayBuffer());

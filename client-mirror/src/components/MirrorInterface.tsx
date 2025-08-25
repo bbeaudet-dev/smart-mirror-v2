@@ -25,38 +25,33 @@ function MirrorInterface() {
         {/* Spacing between time and weather */}
         <div className="h-8"></div>
         
-        {/* Weather and Calendar - Under time */}
-        <div className="flex justify-between px-1">
-          {/* Weather Panel - Left 30% */}
-          <div className="w-[30%]">
+        {/* Left Column - Weather, Calendar, News, Webcam */}
+        <div className="flex justify-start px-1">
+          <div className="w-[30%] flex flex-col">
+            {/* Weather Panel */}
             <WeatherPanel />
-          </div>
-          
-          {/* Blank Space - Middle 40% */}
-          <div className="w-[40%]"></div>
-          
-          {/* Calendar Panel - Right 30% */}
-          <div className="w-[30%]">
+            
+            {/* Spacing */}
+            <div className="h-4 mb-16"></div>
+            
+            {/* Calendar Panel */}
             <CalendarPanel />
-          </div>
-        </div>
-        
-        {/* News Panel - Underneath calendar */}
-        <div className="flex justify-end px-1 mt-4">
-          <div className="w-[30%]">
+            
+            {/* Spacing */}
+            <div className="h-4 mb-16"></div>
+            
+            {/* News Panel */}
             <RotatingNewsPanel />
+            
+            {/* Spacing */}
+            <div className="h-4 mb-16"></div>
+            
+            {/* Webcam Panel */}
+            <WebcamPanel 
+              onAiMessage={setAiMessage}
+              onAiLoading={setIsAiLoading}
+            />
           </div>
-        </div>
-        
-        {/* Spacer to push content to bottom */}
-        <div className="flex-1"></div>
-
-        {/* Webcam Panel - Bottom */}
-        <div className="flex flex-col h-full">
-          <WebcamPanel 
-            onAiMessage={setAiMessage}
-            onAiLoading={setIsAiLoading}
-          />
         </div>
 
         {/* AI Message Panel - Bottom Center */}
