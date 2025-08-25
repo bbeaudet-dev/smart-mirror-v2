@@ -183,4 +183,5 @@ class WeatherService {
   }
 }
 
-module.exports = WeatherService;
+// Export a singleton instance
+module.exports = new WeatherService();

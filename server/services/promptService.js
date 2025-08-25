@@ -71,15 +71,15 @@ class PromptService {
     return `Based on the current weather conditions, suggest an appropriate outfit:
 
 Weather Details:
-- Current Temperature: ${temperature}°F
-- Today's Range: ${todayHigh ? `${todayLow}°F - ${todayHigh}°F` : 'Unknown'}
+- Current Temperature: ${temperature} degrees
+- Today's Range: ${todayHigh ? `${todayLow} degrees - ${todayHigh} degrees` : 'Unknown'}
 - Condition: ${condition}
 - Chance of Rain: ${chanceOfRain}%
 - Humidity: ${humidity || 'Unknown'}%
 - Wind: ${windSpeed || 'Unknown'} mph ${windDirection || ''}
 - UV Index: ${uvIndex || 'Unknown'}
 - Visibility: ${visibility || 'Unknown'} miles
-- Feels Like: ${feelsLike || 'Unknown'}°F
+- Feels Like: ${feelsLike || 'Unknown'} degrees
 - Location: ${location}
 - Time: ${timeOfDay}
 - Recommendation: ${recommendationType === 'tomorrow' ? 'for tomorrow' : 'for now'}${forecastContext}

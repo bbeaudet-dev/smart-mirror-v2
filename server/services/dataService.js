@@ -1,7 +1,6 @@
 
-// Import real weather service
-const WeatherService = require('./weatherService');
-const weatherService = new WeatherService();
+// Import weather service singleton
+const weatherService = require('./weatherService');
 
 class DataService {
 

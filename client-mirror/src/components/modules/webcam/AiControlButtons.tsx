@@ -40,17 +40,27 @@ const AiControlButtons: React.FC<AiControlButtonsProps> = ({
 
   const fetchVoices = async () => {
     try {
+      // Get ElevenLabs voices from the API
       const response = await fetch('http://localhost:5005/api/tts/voices');
       const data = await response.json();
-      setVoices(data.voices || []);
+      
+      if (data.voices && data.voices.length > 0) {
+        setVoices(data.voices);
+      } else {
+        // Fallback to popular ElevenLabs voices
+        setVoices(['nova', 'rachel', 'clyde', 'roger', 'sarah', 'laura', 'thomas', 'charlie', 'george', 'callum', 'river', 'harry', 'liam', 'alice', 'matilda', 'will', 'jessica', 'eric', 'chris', 'brian', 'daniel', 'lily', 'bill']);
+      }
     } catch (error) {
       console.error('Error fetching voices:', error);
+      // Fallback to basic voices
+      setVoices(['nova', 'rachel', 'clyde', 'roger', 'sarah', 'laura', 'thomas', 'charlie', 'george', 'callum', 'river', 'harry', 'liam', 'alice', 'matilda', 'will', 'jessica', 'eric', 'chris', 'brian', 'daniel', 'lily', 'bill']);
     } finally {
       setIsLoadingVoices(false);
     }
   };
 
   const handleVoiceChange = (voice: string) => {
+    console.log('Voice changed to:', voice);
     setSelectedVoice(voice);
     onVoiceChange?.(voice);
   };

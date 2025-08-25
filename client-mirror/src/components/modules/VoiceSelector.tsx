@@ -26,12 +26,29 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({ onVoiceChange, currentVoi
   };
 
   const voiceDescriptions = {
-    alloy: 'Professional & Clear',
-    echo: 'Authoritative & Strong',
-    fable: 'Warm & Friendly',
-    onyx: 'Deep & Smooth (Snoop)',
-    nova: 'Natural & Balanced',
-    shimmer: 'Bright & Energetic (Elle)'
+    nova: 'Natural & Balanced (Default)',
+    rachel: 'Casual & Personable',
+    clyde: 'Intense & Character',
+    roger: 'Classy & Easy-going',
+    sarah: 'Professional & Warm',
+    laura: 'Sassy & Energetic',
+    thomas: 'Meditative & Soft',
+    charlie: 'Australian & Confident',
+    george: 'British & Mature',
+    callum: 'Gravelly & Edgy',
+    river: 'Neutral & Relaxed',
+    harry: 'Rough & Warrior-like',
+    liam: 'Confident & Young',
+    alice: 'British Professional',
+    matilda: 'Upbeat & Professional',
+    will: 'Chill & Conversational',
+    jessica: 'Cute & Young',
+    eric: 'Classy & Smooth',
+    chris: 'Casual & Natural',
+    brian: 'Middle-aged & Resonant',
+    daniel: 'British & Formal',
+    lily: 'British & Warm',
+    bill: 'Friendly & Old'
   };
 
   if (isLoading) {

@@ -30,6 +30,11 @@ const WebcamPanel: React.FC<WebcamPanelProps> = ({ onAiMessage, onAiLoading }) =
   const [detections, setDetections] = useState<DetectionResult[]>([]);
   const [showDetectionOverlay, setShowDetectionOverlay] = useState(true);
   const [selectedVoice, setSelectedVoice] = useState('nova');
+  
+  const handleVoiceChange = (voice: string) => {
+    console.log('WebcamPanel received voice change:', voice);
+    setSelectedVoice(voice);
+  };
 
   // Auto-start webcam when component mounts
   useEffect(() => {
@@ -77,16 +82,28 @@ const WebcamPanel: React.FC<WebcamPanelProps> = ({ onAiMessage, onAiLoading }) =
         // Update detections state for overlay display
         setDetections(result.detections || []);
       } else if (analysisType === 'weather') {
-        // Create FormData with voice preference
+        // Use enhanced analysis with weather context
         const formData = new FormData();
         formData.append('image', imageFile);
         formData.append('voice', selectedVoice);
         
-        const response = await fetch('http://localhost:5005/api/ai/analyze-outfit-with-weather', {
+        console.log('Sending enhanced analysis request with voice:', selectedVoice);
+        
+        const response = await fetch(`http://localhost:5005/api/ai/analyze-outfit-enhanced?voice=${selectedVoice}`, {
           method: 'POST',
           body: formData,
         });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         result = await response.json();
+        
+        console.log('Received enhanced analysis result:', result);
+        
+        // Update detections state for overlay display
+        setDetections(result.detections || []);
       } else if (analysisType === 'roboflow') {
         result = await ApiClient.detectClothing(imageFile) as any;
         // Update detections state for overlay display
@@ -97,15 +114,22 @@ const WebcamPanel: React.FC<WebcamPanelProps> = ({ onAiMessage, onAiLoading }) =
         formData.append('image', imageFile);
         formData.append('voice', selectedVoice);
         
-        const response = await fetch('http://localhost:5005/api/ai/analyze-outfit', {
+        console.log('Sending outfit analysis request with voice:', selectedVoice);
+        
+        const response = await fetch(`http://localhost:5005/api/ai/analyze-outfit?voice=${selectedVoice}`, {
           method: 'POST',
           body: formData,
         });
         result = await response.json();
+        
+        console.log('Received outfit analysis result:', result);
       }
       
       // Step 4: Display the response and play audio if available
-      if (analysisType === 'roboflow') {
+      if (analysisType === 'weather') {
+        // Weather analysis is handled in the streaming section above
+        // No additional processing needed here
+      } else if (analysisType === 'roboflow') {
         // Pure Roboflow detection - format the response
         if (result.detections && result.detections.length > 0) {
           const detectedItems = result.detections.map((d: any) => 
@@ -121,30 +145,61 @@ const WebcamPanel: React.FC<WebcamPanelProps> = ({ onAiMessage, onAiLoading }) =
           speechService.speak(noDetectionMessage);
         }
       } else {
-        // AI analysis responses with combined audio
-        onAiMessage?.(result.analysis, 'ai-response');
+        // AI analysis responses with combined audio (basic and enhanced)
+        console.log('AI response structure:', result);
+        // Extract the actual analysis text from the response
+        let analysisText;
+        if (result.analysis && typeof result.analysis === 'object' && result.analysis.value) {
+          // Handle Promise.allSettled result structure
+          analysisText = result.analysis.value;
+        } else if (typeof result.analysis === 'string') {
+          analysisText = result.analysis;
+        } else {
+          analysisText = JSON.stringify(result.analysis);
+        }
+        console.log('Analysis text:', analysisText);
+        onAiMessage?.(analysisText, 'ai-response');
         
         // Play audio immediately if provided in response
         if (result.audio) {
           try {
-            const audioBlob = new Blob([Uint8Array.from(atob(result.audio), c => c.charCodeAt(0))], { type: 'audio/opus' });
+            console.log('Audio data length:', result.audio.length);
+            console.log('Voice from response:', result.voice);
+            
+            // Convert base64 to binary data
+            const binaryString = atob(result.audio);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+              bytes[i] = binaryString.charCodeAt(i);
+            }
+            
+            const audioBlob = new Blob([bytes], { type: 'audio/mpeg' });
+            console.log('Audio blob size:', audioBlob.size);
+            
             const audioUrl = URL.createObjectURL(audioBlob);
             const audio = new Audio(audioUrl);
             
-            await audio.play();
-            console.log('Playing pre-generated opus audio with voice:', result.voice);
-            
-            // Clean up URL when audio finishes
+            // Add event listeners
+            audio.onloadstart = () => console.log('Audio loading started');
+            audio.oncanplay = () => console.log('Audio can play, duration:', audio.duration);
+            audio.onplay = () => console.log('Audio started playing');
             audio.onended = () => {
+              console.log('Audio finished playing');
               URL.revokeObjectURL(audioUrl);
             };
+            audio.onerror = (e) => console.error('Audio error:', e);
+            
+            await audio.play();
+            console.log('Playing ElevenLabs audio with voice:', result.voice);
+            
           } catch (audioError) {
-            console.error('Failed to play pre-generated audio, falling back to TTS:', audioError);
-            speechService.speak(result.analysis);
+            console.error('Failed to play ElevenLabs audio, falling back to TTS:', audioError);
+            speechService.speak(analysisText);
           }
         } else {
           // Fallback to TTS if no audio provided
-          speechService.speak(result.analysis);
+          console.log('No audio provided, using TTS fallback');
+          speechService.speak(analysisText);
         }
       }
       
@@ -194,7 +249,7 @@ const WebcamPanel: React.FC<WebcamPanelProps> = ({ onAiMessage, onAiLoading }) =
         onEnhancedAnalysis={handleRoboflowDetection}
         onStartWebcam={startWebcam}
         onStopWebcam={stopWebcam}
-        onVoiceChange={setSelectedVoice}
+        onVoiceChange={handleVoiceChange}
       />
     </div>
   );

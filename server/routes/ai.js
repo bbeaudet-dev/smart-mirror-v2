@@ -2,6 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const OpenAIService = require('../services/openai');
 const RoboflowService = require('../services/roboflowService');
+const ElevenLabsService = require('../services/elevenLabsService');
 
 const router = express.Router();
 
@@ -20,98 +21,68 @@ const upload = multer({
   },
 });
 
-
-
-// POST /api/ai/analyze-outfit-with-weather - Outfit analysis with weather context
-router.post('/analyze-outfit-with-weather', upload.single('image'), async (req, res) => {
+// POST /api/ai/text-to-speech - Simple ElevenLabs TTS endpoint
+router.post('/text-to-speech', async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'Image file is required' });
-    }
-
-    const imageBuffer = req.file.buffer;
-    const imageType = req.file.mimetype;
-
-    // Get weather data
-    let weatherData = null;
-    try {
-      const WeatherService = require('../services/weatherService');
-      const weatherService = new WeatherService();
-      weatherData = await weatherService.getWeatherData();
-      console.log('Weather data retrieved for outfit analysis:', weatherData);
-    } catch (weatherError) {
-      console.error('Failed to get weather data for outfit analysis:', weatherError);
-      // Continue without weather data
-    }
-
-    // Use prompt service for weather-aware outfit analysis
-    const PromptService = require('../services/promptService');
-    const outfitPrompt = PromptService.generateWeatherAwareOutfitPrompt(weatherData);
-
-    // Start both AI analysis and TTS generation in parallel
-    const voice = req.body.voice || 'nova';
+    const { text, voice = 'nova' } = req.body;
     
-    const [analysis, ttsResult] = await Promise.allSettled([
-      OpenAIService.analyzeImage(imageBuffer, imageType, outfitPrompt, 'outfit-analysis'),
-      (async () => {
-        try {
-          const TTSService = require('../services/ttsService');
-          const ttsService = new TTSService();
-          // We'll generate TTS after we get the analysis text
-          return { voice };
-        } catch (error) {
-          console.error('TTS service initialization failed:', error);
-          return null;
-        }
-      })()
-    ]);
+    if (!text) {
+      return res.status(400).json({ error: 'Text is required' });
+    }
 
-    // Handle AI analysis result
-    if (analysis.status === 'rejected') {
-      throw new Error(`AI analysis failed: ${analysis.reason.message}`);
+    const elevenLabs = new ElevenLabsService();
+    
+    // Generate audio using ElevenLabs
+    const audioStream = await elevenLabs.streamAudio(text, voice);
+    
+    // Convert stream to buffer
+    const chunks = [];
+    for await (const chunk of audioStream) {
+      chunks.push(chunk);
     }
     
-    const analysisText = analysis.value;
+    const audioBuffer = Buffer.concat(chunks);
     
-    // Generate TTS for the analysis text
-    let audioBuffer = null;
-    if (ttsResult.status === 'fulfilled' && ttsResult.value) {
-      try {
-        const TTSService = require('../services/ttsService');
-        const ttsService = new TTSService();
-        const ttsResponse = await ttsService.generateSpeech(analysisText, voice, 'default');
-        audioBuffer = ttsResponse.audioBuffer;
-      } catch (ttsError) {
-        console.error('TTS generation failed, returning text only:', ttsError);
-      }
-    }
-
-    // Return both text and audio
-    if (audioBuffer) {
-      res.json({ 
-        analysis,
-        audio: audioBuffer.toString('base64'),
-        voice,
-        weather: weatherData,
-        timestamp: new Date().toISOString()
-      });
-    } else {
-      res.json({ 
-        analysis,
-        weather: weatherData,
-        timestamp: new Date().toISOString()
-      });
-    }
+    res.json({
+      success: true,
+      audio: audioBuffer.toString('base64'),
+      voice,
+      textLength: text.length
+    });
+    
   } catch (error) {
-    console.error('Weather-Aware Outfit Analysis Error:', error);
+    console.error('TTS Error:', error);
     res.status(500).json({ 
-      error: 'Failed to analyze outfit with weather',
+      error: 'Failed to generate speech',
       message: error.message 
     });
   }
 });
 
-// POST /api/ai/analyze-outfit - Basic outfit analysis
+// GET /api/ai/elevenlabs-test - Test ElevenLabs connection
+router.get('/elevenlabs-test', async (req, res) => {
+  try {
+    const elevenLabs = new ElevenLabsService();
+    
+    console.log('Testing ElevenLabs connection...');
+    console.log('API Key present:', !!process.env.ELEVENLABS_API_KEY);
+    
+    const isConnected = await elevenLabs.testConnection();
+    const voices = await elevenLabs.getVoices();
+    
+    res.json({ 
+      connected: isConnected, 
+      voices: voices && voices.length ? voices.slice(0, 10) : [], // First 10 voices
+      message: isConnected ? 'ElevenLabs connected!' : 'ElevenLabs connection failed - check server logs',
+      apiKeyPresent: !!process.env.ELEVENLABS_API_KEY
+    });
+  } catch (error) {
+    console.error('ElevenLabs test error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/ai/analyze-outfit - Basic outfit analysis with ElevenLabs TTS
 router.post('/analyze-outfit', upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
@@ -120,22 +91,47 @@ router.post('/analyze-outfit', upload.single('image'), async (req, res) => {
 
     const imageBuffer = req.file.buffer;
     const imageType = req.file.mimetype;
+    const voice = req.query.voice || req.body.voice || 'nova';
+    console.log('Basic AI route received voice parameter:', voice);
+    console.log('Basic Request body keys:', Object.keys(req.body));
+    console.log('Basic Request body voice:', req.body.voice);
+    console.log('Basic Request body:', req.body);
+    console.log('Enhanced AI route received voice parameter:', voice);
+    console.log('Enhanced Request body keys:', Object.keys(req.body));
+    console.log('Enhanced Request body voice:', req.body.voice);
 
     // Use prompt service for basic outfit analysis
     const PromptService = require('../services/promptService');
     const prompt = PromptService.generateOutfitAnalysisPrompt();
+
+    // Get AI analysis
     const analysis = await OpenAIService.analyzeImage(imageBuffer, imageType, prompt, 'outfit-analysis');
     
-    // Generate TTS audio in parallel with selected voice
+    // Generate TTS for the analysis text using ElevenLabs
     let audioBuffer = null;
-    let voice = req.body.voice || 'nova';
-    
     try {
-      const TTSService = require('../services/ttsService');
-      const ttsService = new TTSService();
-      const ttsResult = await ttsService.generateSpeech(analysis, voice, 'default');
-      audioBuffer = ttsResult.audioBuffer;
-      voice = ttsResult.voice;
+      const elevenLabs = new ElevenLabsService();
+      const audioStream = await elevenLabs.streamAudio(analysis, voice);
+      
+      // Convert stream to buffer with better error handling
+      const chunks = [];
+      try {
+        for await (const chunk of audioStream) {
+          if (chunk && chunk.length > 0) {
+            chunks.push(chunk);
+          }
+        }
+      } catch (streamError) {
+        console.error('Error reading audio stream:', streamError);
+        throw new Error('Failed to read audio stream');
+      }
+      
+      if (chunks.length === 0) {
+        throw new Error('No audio data received from ElevenLabs');
+      }
+      
+      audioBuffer = Buffer.concat(chunks);
+      console.log(`Generated audio buffer: ${audioBuffer.length} bytes for voice: ${voice}`);
     } catch (ttsError) {
       console.error('TTS generation failed, returning text only:', ttsError);
     }
@@ -190,7 +186,7 @@ router.post('/detect-clothing', upload.single('image'), async (req, res) => {
   }
 });
 
-// POST /api/ai/analyze-outfit-enhanced - Enhanced outfit analysis with Roboflow + OpenAI
+// POST /api/ai/analyze-outfit-enhanced - Enhanced outfit analysis with Roboflow + OpenAI + ElevenLabs TTS
 router.post('/analyze-outfit-enhanced', upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
@@ -201,16 +197,16 @@ router.post('/analyze-outfit-enhanced', upload.single('image'), async (req, res)
     const imageType = req.file.mimetype;
     const imageBase64 = imageBuffer.toString('base64');
     const imageData = `data:${req.file.mimetype};base64,${imageBase64}`;
+    const voice = req.query.voice || req.body.voice || 'nova';
 
     // Step 1: Detect clothing items using Roboflow
     const roboflowService = new RoboflowService();
     const detections = await roboflowService.detectClothing(imageBuffer);
 
-    // Step 2: Get weather data
+    // Step 2: Get weather data (using cached singleton)
     let weatherData = null;
     try {
-      const WeatherService = require('../services/weatherService');
-      const weatherService = new WeatherService();
+      const weatherService = require('../services/weatherService');
       weatherData = await weatherService.getWeatherData();
     } catch (weatherError) {
       console.error('Failed to get weather data for enhanced analysis:', weatherError);
@@ -221,14 +217,56 @@ router.post('/analyze-outfit-enhanced', upload.single('image'), async (req, res)
 
     // Step 4: Send to OpenAI with enhanced prompt
     const analysis = await OpenAIService.analyzeImage(imageBuffer, imageType, enhancedPrompt, 'outfit-analysis');
+    
+    // Step 5: Generate TTS for the analysis text using ElevenLabs
+    let audioBuffer = null;
+    try {
+      const elevenLabs = new ElevenLabsService();
+      const audioStream = await elevenLabs.streamAudio(analysis, voice);
+      
+      // Convert stream to buffer with better error handling
+      const chunks = [];
+      try {
+        for await (const chunk of audioStream) {
+          if (chunk && chunk.length > 0) {
+            chunks.push(chunk);
+          }
+        }
+      } catch (streamError) {
+        console.error('Error reading audio stream:', streamError);
+        throw new Error('Failed to read audio stream');
+      }
+      
+      if (chunks.length === 0) {
+        throw new Error('No audio data received from ElevenLabs');
+      }
+      
+      audioBuffer = Buffer.concat(chunks);
+      console.log(`Generated audio buffer: ${audioBuffer.length} bytes for voice: ${voice}`);
+    } catch (ttsError) {
+      console.error('TTS generation failed, returning text only:', ttsError);
+    }
 
-    res.json({ 
-      analysis,
-      detections,
-      enhancedPrompt,
-      weather: weatherData,
-      timestamp: new Date().toISOString()
-    });
+    // Return both text and audio
+    if (audioBuffer) {
+      res.json({ 
+        analysis,
+        detections,
+        enhancedPrompt,
+        weather: weatherData,
+        audio: audioBuffer.toString('base64'),
+        voice,
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      res.json({ 
+        analysis,
+        detections,
+        enhancedPrompt,
+        weather: weatherData,
+        timestamp: new Date().toISOString()
+      });
+    }
   } catch (error) {
     console.error('Enhanced Outfit Analysis Error:', error);
     res.status(500).json({ 
