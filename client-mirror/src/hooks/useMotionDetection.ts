@@ -55,6 +55,9 @@ export const useMotionDetection = (
     'Snoop Dogg': 'ash', 
     'Apathetic': 'alloy'
   };
+  
+  // Store selected personality for the current interaction
+  const currentInteractionPersonalityRef = useRef<string>('Magic Mirror');
 
   // Load pre-generated responses
   const loadPreGeneratedResponses = useCallback(async () => {
@@ -200,6 +203,7 @@ export const useMotionDetection = (
       const selectedPersonality = personalities[Math.floor(Math.random() * personalities.length)];
       const selectedVoice = personalityVoiceMapping[selectedPersonality as keyof typeof personalityVoiceMapping];
       currentInteractionVoiceRef.current = selectedVoice;
+      currentInteractionPersonalityRef.current = selectedPersonality;
       
       console.log(`Starting new interaction with personality: ${selectedPersonality} (voice: ${selectedVoice})`);
       
@@ -380,7 +384,8 @@ export const useMotionDetection = (
       });
 
       const imageFile = new File([blob], 'automatic-analysis.jpg', { type: 'image/jpeg' });
-      const result = await ApiClient.automaticAnalysis(imageFile) as { analysis: string; audio?: string };
+      const selectedPersonality = currentInteractionPersonalityRef.current;
+      const result = await ApiClient.automaticAnalysis(imageFile, selectedPersonality) as { analysis: string; audio?: string };
       
       onAiMessage?.(result.analysis, 'ai-response');
       
@@ -448,17 +453,17 @@ export const useMotionDetection = (
       // Stage 1: Immediate motion response (pre-generated audio only)
       playMotionResponse();
       
-      // Stage 2: Start AI analysis 
-      setTimeout(() => {
-        console.log('Starting AI analysis');
-        handleAutomaticAnalysis();
-      }, 1000); // Start analysis 1 second after motion response
-      
-      // Stage 3: Welcome message
+      // Stage 2: Welcome message (1.5 seconds after motion response)
       setTimeout(() => {
         console.log('Playing welcome message');
         playWelcomeResponse();
-      }, 2500); // 2.5 seconds after motion response
+      }, 1000); // 1 second after motion response
+      
+      // Stage 3: Start AI analysis (2 seconds after motion response)
+      setTimeout(() => {
+        console.log('Starting AI analysis');
+        handleAutomaticAnalysis();
+      }, 2500); // Start analysis 2.5 seconds after motion response
     }
   }, [isAutomaticMode, isMotionDetected, isAnalyzing, analysisCompleteTime, isInteractionActive]);
 

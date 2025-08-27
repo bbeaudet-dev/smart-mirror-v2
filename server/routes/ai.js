@@ -195,7 +195,45 @@ router.post('/automatic', upload.single('image'), async (req, res) => {
 
     // Use prompt service for automatic analysis
     const PromptService = require('../services/promptService');
-    const personalityResult = PromptService.generateRandomPersonalityPrompt(weatherData);
+    
+    // Get personality from request body, or use random if not provided
+    const requestedPersonality = req.body.personality;
+    let personalityResult;
+    
+    if (requestedPersonality) {
+      console.log(`Using requested personality: ${requestedPersonality}`);
+      // Generate prompt for the specific personality
+      switch (requestedPersonality) {
+        case 'Magic Mirror':
+          personalityResult = {
+            prompt: PromptService.generateMagicMirrorPrompt(weatherData),
+            personality: 'Magic Mirror',
+            voice: 'fable'
+          };
+          break;
+        case 'Snoop Dogg':
+          personalityResult = {
+            prompt: PromptService.generateSnoopDoggPrompt(weatherData),
+            personality: 'Snoop Dogg',
+            voice: 'ash'
+          };
+          break;
+        case 'Apathetic':
+          personalityResult = {
+            prompt: PromptService.generateApatheticPrompt(weatherData),
+            personality: 'Apathetic',
+            voice: 'alloy'
+          };
+          break;
+        default:
+          console.log(`Unknown personality "${requestedPersonality}", using random`);
+          personalityResult = PromptService.generateRandomPersonalityPrompt(weatherData);
+      }
+    } else {
+      console.log('No personality requested, using random');
+      personalityResult = PromptService.generateRandomPersonalityPrompt(weatherData);
+    }
+    
     const automaticPrompt = personalityResult.prompt;
     const selectedVoice = personalityResult.voice;
     

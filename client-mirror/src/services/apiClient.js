@@ -306,11 +306,15 @@ class ApiClient {
   /**
    * Automatic analysis for motion detection
    * @param {File} imageFile - Image file
+   * @param {string} personality - Selected personality for consistent voice
    * @returns {Promise<Object>} - Automatic analysis result with audio
    */
-  static async automaticAnalysis(imageFile) {
+  static async automaticAnalysis(imageFile, personality = null) {
     const formData = new FormData();
     formData.append('image', imageFile);
+    if (personality) {
+      formData.append('personality', personality);
+    }
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/ai/automatic`, {
