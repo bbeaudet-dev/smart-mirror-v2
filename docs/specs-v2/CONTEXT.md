@@ -48,6 +48,7 @@ smart-mirror-v2/
 ### What's Working
 
 **Motion Detection Flow:**
+
 1. Motion detected → Plays pre-generated motion response (audio only, no text)
 2. Stabilization period → Person detection
 3. If person detected → Plays welcome response (audio only, no text)
@@ -55,17 +56,20 @@ smart-mirror-v2/
 5. Sendoff response → Plays after AI completes (audio only, no text)
 
 **Message Display:**
+
 - Only the main AI analysis message shows text (`MessagePanel.tsx`)
 - Motion/welcome/sendoff messages are audio-only
 - MessagePanel has `type` prop: `'ai-response' | 'motivation' | 'outfit-analysis' | 'general'`
 
 **Audio System:**
+
 - Pre-generated audio: `server/data/audio-pre-generated/` (motion, welcome, sendoff)
 - TTS generation: OpenAI API via `ttsService.js`
 - Audio caching: Both pre-generated and TTS are cached
 - Voice selection: Based on personality (ash, fable, onyx, shimmer, etc.)
 
 **Motion Detection:**
+
 - Implemented in `useMotionDetection.ts` hook
 - Frame differencing approach
 - Triggers on threshold + duration
@@ -85,12 +89,14 @@ smart-mirror-v2/
 ### Message Display Pattern
 
 **Current (AI messages only):**
+
 ```typescript
 // In useMotionDetection.ts or wherever
-onAiMessage?.(text, 'ai-response');
+onAiMessage?.(text, "ai-response");
 ```
 
 **V2 Goal: Display ALL messages**
+
 - Motion, welcome, AI, sendoff should all show text
 - Use same `MessagePanel` component with appropriate `type`
 - Hook into audio playback events to sync text display
@@ -100,19 +106,26 @@ onAiMessage?.(text, 'ai-response');
 ### Audio Playback Pattern
 
 **Pre-generated audio:**
+
 ```typescript
 // Pattern used in useMotionDetection.ts
 const response = await fetch(`/api/pre-generated-audio/${type}`);
 const audioBlob = await response.blob();
 const audio = new Audio(URL.createObjectURL(audioBlob));
 await audio.play();
-audio.onended = () => { /* cleanup */ };
+audio.onended = () => {
+  /* cleanup */
+};
 ```
 
 **TTS audio:**
+
 ```typescript
 // Pattern for AI responses
-const response = await fetch('/api/tts/generate', { method: 'POST', body: JSON.stringify({ text, personality }) });
+const response = await fetch("/api/tts/generate", {
+  method: "POST",
+  body: JSON.stringify({ text, personality }),
+});
 const audioBlob = await response.blob();
 // ... same playback pattern
 ```
@@ -122,10 +135,12 @@ const audioBlob = await response.blob();
 ### Motion Detection Pattern
 
 **Current flow:**
+
 - `useMotionDetection` hook monitors webcam frames
 - On motion → `playMotionResponse()` → stabilization → `playWelcomeResponse()` → `handleAutomaticAnalysis()`
 
 **Key files:**
+
 - `client-mirror/src/hooks/useMotionDetection.ts` (main logic)
 - `client-mirror/src/components/MirrorInterface.tsx` (uses the hook)
 
@@ -142,9 +157,10 @@ const audioBlob = await response.blob();
 - Services in `server/services/` contain business logic
 
 **Pattern:**
+
 ```javascript
 // client-mirror/src/services/apiClient.js
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5005';
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5005";
 
 // Usage
 fetch(`${API_BASE_URL}/api/endpoint`);
@@ -153,25 +169,30 @@ fetch(`${API_BASE_URL}/api/endpoint`);
 ## Key Files to Reference
 
 ### For Unified Messages & Indicators
+
 - `client-mirror/src/components/modules/messages/MessagePanel.tsx` - Message display component
 - `client-mirror/src/hooks/useMotionDetection.ts` - Audio playback and motion logic
 - `client-mirror/src/services/speechService.ts` - TTS client wrapper
 
 ### For Routines & Voice
+
 - `client-mirror/src/hooks/useWebcam.ts` - Webcam access (also has microphone)
 - `server/routes/preGeneratedAudio.js` - Audio endpoint patterns
 
 ### For Calendar & Insights
+
 - `server/services/calendarService.js` - Currently returns mock data
 - `server/services/dataService.js` - Example of data aggregation
 - `client-mirror/src/components/modules/CalendarPanel.tsx` - UI component (uses mock)
 
 ### For Event Tailoring
+
 - `server/services/preGeneratedAudioService.js` - Audio library management
 - `server/routes/preGeneratedAudio.js` - Audio API patterns
 - `server/data/audio-pre-generated/` - File structure
 
 ### For Roboflow
+
 - `docs/specs-v1/ROBOFLOW-SPEC.md` - Previous implementation attempt
 - `server/services/roboflowService.js` - May exist, check if it needs updating
 
@@ -228,4 +249,3 @@ NEWS_API_KEY=...
 ---
 
 **Remember:** The specs define **what** to build. This context explains **how** the codebase currently works so you can build on existing patterns rather than reinventing the wheel.
-
