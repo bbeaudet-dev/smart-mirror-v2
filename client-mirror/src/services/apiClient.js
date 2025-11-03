@@ -360,6 +360,41 @@ class ApiClient {
   }
 
   /**
+   * Get a random sendoff response audio URL
+   * @returns {string} - URL to sendoff audio file
+   */
+  static getSendoffAudioUrl() {
+    return `${API_BASE_URL}/api/pre-generated-audio/sendoff`;
+  }
+
+  /**
+   * Get motion response with both audio and text (JSON format)
+   * @param {string} voice - Voice to use
+   * @returns {Promise<Object>} - Motion response with text and base64 audio
+   */
+  static async getMotionWithText(voice = 'ash') {
+    return this.get(`/api/pre-generated-audio/motion?format=json&voice=${voice}`);
+  }
+
+  /**
+   * Get welcome response with both audio and text (JSON format)
+   * @param {string} voice - Voice to use
+   * @returns {Promise<Object>} - Welcome response with text and base64 audio
+   */
+  static async getWelcomeWithText(voice = 'ash') {
+    return this.get(`/api/pre-generated-audio/welcome?format=json&voice=${voice}`);
+  }
+
+  /**
+   * Get sendoff response with both audio and text (JSON format)
+   * @param {string} voice - Voice to use
+   * @returns {Promise<Object>} - Sendoff response with text and base64 audio
+   */
+  static async getSendoffWithText(voice = 'ash') {
+    return this.get(`/api/pre-generated-audio/sendoff?format=json&voice=${voice}`);
+  }
+
+  /**
    * Get a random motion response text
    * @returns {Promise<Object>} - Motion response text
    */
@@ -373,14 +408,6 @@ class ApiClient {
    */
   static async getWelcomeText() {
     return this.get('/api/pre-generated-audio/welcome-text');
-  }
-
-  /**
-   * Get a random sendoff response audio URL
-   * @returns {string} - URL to sendoff audio file
-   */
-  static getSendoffAudioUrl() {
-    return `${API_BASE_URL}/api/pre-generated-audio/sendoff`;
   }
 
   /**

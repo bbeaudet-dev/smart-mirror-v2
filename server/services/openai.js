@@ -54,13 +54,8 @@ class OpenAIService {
    */
   static async analyzeImage(imageBuffer, imageType, prompt, context = 'outfit-analysis') {
     try {
-      console.log('=== OPENAI VISION DEBUG ===');
-      console.log('Prompt being sent:', prompt);
-      console.log('Image type:', imageType);
-      console.log('Image buffer size:', imageBuffer.length);
-      
       const completion = await openai.chat.completions.create({
-        model: "gpt-4o", // Back to regular for better responses
+        model: "gpt-4o",
         messages: [
           {
             role: "user",
