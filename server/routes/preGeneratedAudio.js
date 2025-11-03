@@ -73,6 +73,7 @@ router.post('/generate', async (req, res) => {
 /**
  * GET /api/pre-generated-audio/motion
  * Get a random motion response audio file
+ * If ?format=json, returns JSON with base64 audio and text
  */
 router.get('/motion', async (req, res) => {
   try {
@@ -81,16 +82,29 @@ router.get('/motion', async (req, res) => {
     const voice = req.query.voice || availableVoices[Math.floor(Math.random() * availableVoices.length)];
     const audioInfo = await preGeneratedAudioService.getRandomMotionAudio(voice);
     
-    // Send the audio file
-    res.sendFile(audioInfo.filepath, (err) => {
-      if (err) {
-        console.error('Error sending motion audio file:', err);
-        res.status(500).json({
-          success: false,
-          error: 'Failed to send audio file'
-        });
-      }
-    });
+    // If format=json, return JSON with base64 audio and text
+    if (req.query.format === 'json') {
+      const audioBuffer = await fs.readFile(audioInfo.filepath);
+      res.json({
+        success: true,
+        text: audioInfo.text,
+        audio: audioBuffer.toString('base64'),
+        voice: voice,
+        type: audioInfo.type,
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      // Send the audio file (backward compatible)
+      res.sendFile(audioInfo.filepath, (err) => {
+        if (err) {
+          console.error('Error sending motion audio file:', err);
+          res.status(500).json({
+            success: false,
+            error: 'Failed to send audio file'
+          });
+        }
+      });
+    }
   } catch (error) {
     console.error('Error getting motion audio:', error);
     res.status(500).json({
@@ -104,6 +118,7 @@ router.get('/motion', async (req, res) => {
 /**
  * GET /api/pre-generated-audio/welcome
  * Get a random welcome response audio file
+ * If ?format=json, returns JSON with base64 audio and text
  */
 router.get('/welcome', async (req, res) => {
   try {
@@ -112,16 +127,29 @@ router.get('/welcome', async (req, res) => {
     const voice = req.query.voice || availableVoices[Math.floor(Math.random() * availableVoices.length)];
     const audioInfo = await preGeneratedAudioService.getRandomWelcomeAudio(voice);
     
-    // Send the audio file
-    res.sendFile(audioInfo.filepath, (err) => {
-      if (err) {
-        console.error('Error sending welcome audio file:', err);
-        res.status(500).json({
-          success: false,
-          error: 'Failed to send audio file'
-        });
-      }
-    });
+    // If format=json, return JSON with base64 audio and text (like AI endpoint)
+    if (req.query.format === 'json') {
+      const audioBuffer = await fs.readFile(audioInfo.filepath);
+      res.json({
+        success: true,
+        text: audioInfo.text,
+        audio: audioBuffer.toString('base64'),
+        voice: voice,
+        type: audioInfo.type,
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      // Send the audio file (backward compatible)
+      res.sendFile(audioInfo.filepath, (err) => {
+        if (err) {
+          console.error('Error sending welcome audio file:', err);
+          res.status(500).json({
+            success: false,
+            error: 'Failed to send audio file'
+          });
+        }
+      });
+    }
   } catch (error) {
     console.error('Error getting welcome audio:', error);
     res.status(500).json({
@@ -179,6 +207,7 @@ router.get('/welcome-text', async (req, res) => {
 /**
  * GET /api/pre-generated-audio/sendoff
  * Get a random sendoff response audio file
+ * If ?format=json, returns JSON with base64 audio and text
  */
 router.get('/sendoff', async (req, res) => {
   try {
@@ -187,16 +216,29 @@ router.get('/sendoff', async (req, res) => {
     const voice = req.query.voice || availableVoices[Math.floor(Math.random() * availableVoices.length)];
     const audioInfo = await preGeneratedAudioService.getRandomSendoffAudio(voice);
     
-    // Send the audio file
-    res.sendFile(audioInfo.filepath, (err) => {
-      if (err) {
-        console.error('Error sending sendoff audio file:', err);
-        res.status(500).json({
-          success: false,
-          error: 'Failed to send audio file'
-        });
-      }
-    });
+    // If format=json, return JSON with base64 audio and text (like AI endpoint)
+    if (req.query.format === 'json') {
+      const audioBuffer = await fs.readFile(audioInfo.filepath);
+      res.json({
+        success: true,
+        text: audioInfo.text,
+        audio: audioBuffer.toString('base64'),
+        voice: voice,
+        type: audioInfo.type,
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      // Send the audio file (backward compatible)
+      res.sendFile(audioInfo.filepath, (err) => {
+        if (err) {
+          console.error('Error sending sendoff audio file:', err);
+          res.status(500).json({
+            success: false,
+            error: 'Failed to send audio file'
+          });
+        }
+      });
+    }
   } catch (error) {
     console.error('Error getting sendoff audio:', error);
     res.status(500).json({

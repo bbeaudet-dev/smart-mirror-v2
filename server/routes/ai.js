@@ -154,13 +154,6 @@ router.post('/magic-mirror-tts', upload.single('image'), async (req, res) => {
 
 // POST /api/ai/automatic - Automatic analysis for motion detection
 router.post('/automatic', upload.single('image'), async (req, res) => {
-  console.log('=== AUTOMATIC ROUTE CALLED ===');
-  console.log('Request body keys:', Object.keys(req.body || {}));
-  console.log('File received:', req.file ? 'YES' : 'NO');
-  if (req.file) {
-    console.log('File mimetype:', req.file.mimetype);
-    console.log('File size:', req.file.size);
-  }
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'Image file is required' });
@@ -169,17 +162,18 @@ router.post('/automatic', upload.single('image'), async (req, res) => {
     const imageBuffer = req.file.buffer;
     const imageType = req.file.mimetype;
     
-    // DEBUG: Save image to see what we're actually sending
-    const fs = require('fs');
-    const path = require('path');
-    const debugDir = path.join(__dirname, '../debug-images');
-    if (!fs.existsSync(debugDir)) {
-      fs.mkdirSync(debugDir, { recursive: true });
+    // Optional: Save debug images (only in development)
+    if (process.env.NODE_ENV === 'development' && process.env.DEBUG_IMAGES === 'true') {
+      const fs = require('fs');
+      const path = require('path');
+      const debugDir = path.join(__dirname, '../debug-images');
+      if (!fs.existsSync(debugDir)) {
+        fs.mkdirSync(debugDir, { recursive: true });
+      }
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const debugPath = path.join(debugDir, `debug-${timestamp}.jpg`);
+      fs.writeFileSync(debugPath, imageBuffer);
     }
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const debugPath = path.join(debugDir, `debug-${timestamp}.jpg`);
-    fs.writeFileSync(debugPath, imageBuffer);
-    console.log('DEBUG: Saved image to:', debugPath);
 
     // Get weather data
     let weatherData = null;
@@ -193,13 +187,9 @@ router.post('/automatic', upload.single('image'), async (req, res) => {
       // Continue without weather data
     }
 
-    // Use prompt service for automatic analysis (same as Magic Mirror TTS for now)
+    // Use prompt service for automatic analysis
     const PromptService = require('../services/promptService');
     const automaticPrompt = PromptService.generateRandomPersonalityPrompt(weatherData);
-    
-    console.log('=== AUTOMATIC ANALYSIS DEBUG ===');
-    console.log('Generated prompt:', automaticPrompt);
-    console.log('Weather data:', weatherData);
 
     const analysis = await OpenAIService.analyzeImage(imageBuffer, imageType, automaticPrompt, 'automatic-analysis');
     

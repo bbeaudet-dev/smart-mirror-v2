@@ -15,11 +15,7 @@ export const useWebcam = () => {
       setError(null);
       setIsCapturing(true);
       
-      console.log("Starting USB webcam...");
-      console.log("Environment:", process.env.NODE_ENV);
-      console.log("Is Electron:", isElectron);
-      console.log("Available media devices:", await navigator.mediaDevices.enumerateDevices());
-      
+    
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: {
           width: { ideal: 1920, min: 1280 },
@@ -29,17 +25,12 @@ export const useWebcam = () => {
         audio: false, // We'll use something else for output
       });
       
-      console.log("Webcam started successfully:", mediaStream);
-      console.log("Video tracks:", mediaStream.getVideoTracks());
       setStream(mediaStream);
       setIsInitialized(true);
       
       // Auto-start video element if ref is available
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
-        console.log("Video element srcObject set");
-      } else {
-        console.log("Video ref not available yet");
       }
       
     } catch (error: any) {

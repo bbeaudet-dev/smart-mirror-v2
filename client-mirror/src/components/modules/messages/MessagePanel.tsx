@@ -1,45 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import AiLoadingSpinner from './AiLoadingSpinner';
 
 interface MessagePanelProps {
   message?: string | null;
-  isLoading?: boolean;
-  type?: 'ai-response' | 'motivation' | 'outfit-analysis' | 'general';
+  type?: 'ai-response' | 'motivation' | 'outfit-analysis' | 'general' | 'motion' | 'welcome' | 'sendoff';
 }
 
 const MessagePanel: React.FC<MessagePanelProps> = ({ 
   message, 
-  isLoading = false, 
   type = 'general' 
 }) => {
   const [displayMessage, setDisplayMessage] = useState<string | null>(message || null);
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    console.log("MessagePanel: Received message:", message);
-    console.log("MessagePanel: isLoading:", isLoading);
-    
-    if (isLoading) {
-      setIsVisible(true);
-      console.log("MessagePanel: Setting loading visible");
-    } else if (message) {
+    if (message) {
       setDisplayMessage(message);
       setIsVisible(true);
-      console.log("MessagePanel: Setting message visible:", message);
 
       // Auto-hide message after 15 seconds (longer for better readability)
       const timer = setTimeout(() => {
         setIsVisible(false);
-        console.log("MessagePanel: Auto-hiding message");
       }, 15000);
 
       return () => clearTimeout(timer);
     } else {
       setIsVisible(false);
     }
-  }, [message, isLoading]);
+  }, [message]);
 
-  if (!isVisible && !isLoading) {
+  if (!isVisible) {
     return null;
   }
 
@@ -51,6 +40,12 @@ const MessagePanel: React.FC<MessagePanelProps> = ({
         return 'MOTIVATION';
       case 'outfit-analysis':
         return 'OUTFIT';
+      case 'motion':
+        return 'MOTION';
+      case 'welcome':
+        return 'WELCOME';
+      case 'sendoff':
+        return 'SENDOFF';
       case 'general':
         return 'MESSAGE';
       default:
@@ -65,22 +60,16 @@ const MessagePanel: React.FC<MessagePanelProps> = ({
         transition-all duration-700 ease-in-out
         ${isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-8 scale-95'}
       `}>
-        {isLoading ? (
-          <div className="flex items-center justify-center">
-            <AiLoadingSpinner isVisible={isLoading} />
+        <div className="flex items-start space-x-4">
+          <div className="text-mirror-xl flex-shrink-0 font-bold">
+            {getMessageIcon()}
           </div>
-        ) : (
-          <div className="flex items-start space-x-4">
-            <div className="text-mirror-xl flex-shrink-0 font-bold">
-              {getMessageIcon()}
-            </div>
-            <div className="flex-1">
-              <p className="text-mirror-base text-mirror-text font-mirror-primary leading-relaxed">
-                {displayMessage}
-              </p>
-            </div>
+          <div className="flex-1">
+            <p className="text-mirror-base text-mirror-text font-mirror-primary leading-relaxed">
+              {displayMessage}
+            </p>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
